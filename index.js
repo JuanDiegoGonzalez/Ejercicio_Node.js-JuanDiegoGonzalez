@@ -63,7 +63,7 @@ server = http.createServer(async function (req, res) {
         }));
     }
     else{
-        res.write('Pagina de inicio. Por favor ingresar a alguna de estas URLs:<br>');
+        res.write('Por favor ingresar a alguna de estas URLs:<br>');
         res.write('<a href="http://localhost:8081/api/proveedores">http://localhost:8081/api/proveedores</a><br>');
         res.write('<a href="http://localhost:8081/api/clientes">http://localhost:8081/api/clientes</a><br>');
         res.end()

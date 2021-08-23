@@ -6,16 +6,26 @@ const fs = require('fs');
 const http = require('http');
 const axios = require('axios');
 
-// Metodo que crea el archivo html segun el nombre que llega por parametro, y lo escribe
-async function escribirHTML(nombre, data)
-{
-    // Se crea y escribe el archivo html usando el modulo fs
-    let output = ""
-    data.forEach(act => {
-        output += act.toString() + "<br>";
-    });
-    fs.writeFileSync(nombre, output, 'utf8');
-}
+// Servidor web usando el modulo http
+server = http.createServer(async function (req, res) {
+    res.writeHead(200, {'Content-Type': 'text/html'});
+    
+    var url = req.url;
+    if(url.includes('proveedores')){
+        await cargarProveedores()
+        res.end(fs.readFileSync('./proveedores.html', 'utf8'));
+    }
+    else if(url.includes('clientes')){
+        await cargarClientes()
+        res.end(fs.readFileSync('./clientes.html', 'utf8'));
+    }
+    else{
+        res.write('Por favor ingresar a alguna de estas URLs:<br>');
+        res.write('<a href="http://localhost:8081/api/proveedores">http://localhost:8081/api/proveedores</a><br>');
+        res.write('<a href="http://localhost:8081/api/clientes">http://localhost:8081/api/clientes</a><br>');
+        res.end()
+    }
+  }).listen(8081);
 
 // Metodo que carga la informacion de los proveedores en el archivo proveedores.html
 async function cargarProveedores()
@@ -28,7 +38,7 @@ async function cargarProveedores()
         return [act.idproveedor, act.nombrecompania, act.nombrecontacto];
     })
 
-    escribirHTML("proveedores.html", dataProveedores);
+    escribirHTML("proveedores", dataProveedores);
 }
 
 // Metodo que carga la informacion de los clientes en el archivo clientes.html
@@ -42,30 +52,26 @@ async function cargarClientes()
         return [act.idCliente, act.NombreCompania, act.NombreContacto];
     })
 
-    escribirHTML("clientes.html", dataClientes);
+    escribirHTML("clientes", dataClientes);
 }
 
-// Servidor web usando el modulo http
-server = http.createServer(async function (req, res) {
-    res.writeHead(200, {'Content-Type': 'text/html'});
-    
-    var url = req.url;
-    if(url.includes('proveedores')){
-        await cargarProveedores()
-        res.end(fs.readFileSync('./proveedores.html', 'utf8', function (err, html) {
-            response.end(html); 
-        }));
-    }
-    else if(url.includes('clientes')){
-        await cargarClientes()
-        res.end(fs.readFileSync('./clientes.html', 'utf8', function (err, html) {
-            response.end(html); 
-        }));
-    }
-    else{
-        res.write('Por favor ingresar a alguna de estas URLs:<br>');
-        res.write('<a href="http://localhost:8081/api/proveedores">http://localhost:8081/api/proveedores</a><br>');
-        res.write('<a href="http://localhost:8081/api/clientes">http://localhost:8081/api/clientes</a><br>');
-        res.end()
-    }
-  }).listen(8081);
+// Metodo que crea el archivo html segun el nombre que llega por parametro, y lo escribe
+async function escribirHTML(nombre, data)
+{
+    // Se cargan las partes base del html
+    const baseHtml = fs.readFileSync('./base.html', 'utf8');
+    htmlParts = baseHtml.split("Replace");
+
+    // Se escribe la primera parte del html
+    let output = htmlParts[0] + nombre + htmlParts[1];
+
+    // Se agregan las filas de la tabla (informacion de proveedores/clientes)
+    data.forEach(act => {
+        output += `<tr>\n<td>${act[0]}</td>\n<td>${act[1]}</td>\n<td>${act[2]}</td>\n</tr>\n`
+    });
+
+    // Se escribe la ultima parte del html
+    output += htmlParts[2];
+
+    fs.writeFileSync(nombre + ".html", output, 'utf8');
+}
